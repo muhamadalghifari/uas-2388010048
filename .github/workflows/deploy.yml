@@ -10,48 +10,20 @@ on:
       - 'docker-compose.yml'
 
 jobs:
-  build-static:
-    name: Build & Push Static Web
+  build-and-deploy-static:
+    name: Static Web Pipeline
     runs-on: ubuntu-latest
-    if: contains(github.event.commits[0].modified, 'static-web/') || contains(github.event.commits[0].added, 'static-web/')
+    if: contains(toJSON(github.event.commits.*.modified), 'static-web') || contains(toJSON(github.event.commits.*.added), 'static-web')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
       - name: Build & Push static-web
         uses: docker/build-push-action@v5
         with:
           context: ./static-web
           push: true
           tags: muhamadalghifari/static-web:latest
-
-  build-dynamic:
-    name: Build & Push Dynamic App
-    runs-on: ubuntu-latest
-    if: contains(github.event.commits[0].modified, 'dynamic-app/') || contains(github.event.commits[0].added, 'dynamic-app/')
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build & Push dynamic-app
-        uses: docker/build-push-action@v5
-        with:
-          context: ./dynamic-app
-          push: true
-          tags: muhamadalghifari/dynamic-app:latest
-
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: [build-static, build-dynamic]
-    if: always()
-    steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -60,6 +32,32 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/uas-2388010048
-            docker compose pull
-            docker compose up -d
+            docker compose pull static-web
+            docker compose up -d static-web
+            docker image prune -f
+
+  build-and-deploy-dynamic:
+    name: Dynamic App Pipeline
+    runs-on: ubuntu-latest
+    if: contains(toJSON(github.event.commits.*.modified), 'dynamic-app') || contains(toJSON(github.event.commits.*.added), 'dynamic-app')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Build & Push dynamic-app
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dynamic-app
+          push: true
+          tags: muhamadalghifari/dynamic-app:latest
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/uas-2388010048
+            docker compose pull dynamic-app
+            docker compose up -d dynamic-app
             docker image prune -f
