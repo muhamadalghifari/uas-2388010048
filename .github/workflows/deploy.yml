@@ -4,11 +4,16 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'static-web/**'
+      - 'dynamic-app/**'
+      - 'docker-compose.yml'
 
 jobs:
-  deploy:
+  build-static:
+    name: Build & Push Static Web
     runs-on: ubuntu-latest
-
+    if: contains(github.event.commits[0].modified, 'static-web/') || contains(github.event.commits[0].added, 'static-web/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,6 +28,17 @@ jobs:
           push: true
           tags: muhamadalghifari/static-web:latest
 
+  build-dynamic:
+    name: Build & Push Dynamic App
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'dynamic-app/') || contains(github.event.commits[0].added, 'dynamic-app/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
       - name: Build & Push dynamic-app
         uses: docker/build-push-action@v5
         with:
@@ -30,6 +46,12 @@ jobs:
           push: true
           tags: muhamadalghifari/dynamic-app:latest
 
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [build-static, build-dynamic]
+    if: always()
+    steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
