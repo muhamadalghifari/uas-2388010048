@@ -1,0 +1,42 @@
+services:
+  static-web:
+    image: muhamadalghifari/static-web:latest
+    container_name: static-web
+    ports:
+      - "80:80"
+    networks:
+      - appnet
+
+  dynamic-app:
+    image: muhamadalghifari/dynamic-app:latest
+    container_name: dynamic-app
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: secret
+      DB_NAME: cinelist
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - appnet
+
+  db:
+    image: mariadb:10.11
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: cinelist
+    volumes:
+      - ./dynamic-app/database.sql:/docker-entrypoint-initdb.d/database.sql
+      - dbdata:/var/lib/mysql
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  dbdata:
