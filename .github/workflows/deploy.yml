@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build & Push static-web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./static-web
+          push: true
+          tags: muhamadalghifari/static-web:latest
+
+      - name: Build & Push dynamic-app
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dynamic-app
+          push: true
+          tags: muhamadalghifari/dynamic-app:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/uas-2388010048
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
