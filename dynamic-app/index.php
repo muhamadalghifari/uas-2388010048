@@ -127,7 +127,7 @@ $stats = $counts->fetch();
 </head>
 <body>
 <nav>
-  <div class="nav-logo">Alghifari</div>
+  <div class="nav-logo">CineList</div>
   <div class="nav-right">
     <div class="nav-user">Hello, <span><?= htmlspecialchars(currentUsername()) ?></span></div>
     <a href="logout.php" class="nav-logout">SIGN OUT</a>
