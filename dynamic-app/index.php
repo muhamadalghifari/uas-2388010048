@@ -136,7 +136,7 @@ $stats = $counts->fetch();
 <main>
   <div class="page-header">
     <div class="page-tag">YOUR FILM VAULT</div>
-    <h1 class="page-title">My <em>Watchlist</em></h1>
+    <h1 class="page-title">muhamadalghifari <em>2388010048</em></h1>
   </div>
 
   <div class="stats">
