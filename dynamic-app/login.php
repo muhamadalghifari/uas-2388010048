@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="card">
   <div class="logo">CineList</div>
   <div class="logo-sub">YOUR PERSONAL FILM VAULT</div>
-  <h2>Welcome back</h2>
+  <h2>Login form</h2>
   <p class="sub">Sign in to your watchlist</p>
   <?php if ($error): ?>
   <div class="error"><?= htmlspecialchars($error) ?></div>
